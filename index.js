@@ -9,8 +9,8 @@ import notificationRoutes from "./routes/notification.route.js";
 import connectionRoutes from "./routes/connection.route.js";
 import workRoutes from "./routes/work.route.js";
 import { connectDB } from "./lib/db.js";
-import WorkDetail from "./models/workdetail.model.js";
 import workDetailRoutes from "./routes/workDetails.route.js";
+import newsRoutes from "./routes/news.route.js";
 
 dotenv.config();
 
@@ -31,7 +31,10 @@ app.use("/api/v1/connections", connectionRoutes);
 app.use("/api/v1/works", workRoutes);
 app.use("/api/v1/workdetails", workDetailRoutes);
 
+app.use('/api/v1/news', newsRoutes);
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   connectDB();
 });
+

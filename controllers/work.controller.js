@@ -1,6 +1,7 @@
 import e from "express";
 import JobPost from "../models/jobpost.model.js";
 import User from "../models/user.model.js";
+import Notification from "../models/notification.model.js";
 
 export const createWork = async (req, res) => {
   try {
@@ -29,6 +30,18 @@ export const createWork = async (req, res) => {
     });
     await newWork.save();
     res.status(201).json({ message: "Work Post created successfully" });
+
+    // Send notification to all followers
+    const user = await User.find({ followingClients: req.user._id });
+    user.forEach(async (follower) => {
+      const notification = new Notification({
+        recipient: follower._id,
+        relatedUser: req.user._id,
+        type: "Job Posted by Followed Client",
+        message: `${req.user.firstName} ${req.user.lastName} posted a new work: ${title}`,
+      });
+      await notification.save();
+    });
   } catch (error) {
     console.log("Error in createWork: ", error.message);
     res.status(500).json({ message: "Server error" });
@@ -54,7 +67,7 @@ export const getWorkPostById = async (req, res) => {
     const postId = req.params.id;
     const post = await JobPost.findById(postId).populate(
       "author",
-      "firstName lastName username profilePicture"
+      "firstName lastName username profilePicture headline"
     );
     res.status(200).json(post);
   } catch (error) {

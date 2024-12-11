@@ -2,7 +2,8 @@ import mongoose from "mongoose";
 
 const workDetailSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  servicesOffered: [{ type: String }], // Example: "Plumbing", "Carpentry"
+  serviceOffered: { type: String }, // Example: "Plumbing", "Carpentry"
+  description: { type: String },
   hourlyRate: { type: Number },
   availability: {
     days: [{ type: String, enum: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] }],
@@ -13,12 +14,12 @@ const workDetailSchema = new mongoose.Schema({
       },
     ],
   },
-  jobHistory: [
+  ratings: { type: Number },
+  reviews: [
     {
-      clientId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-      jobTitle: String,
-      description: String,
-      dateCompleted: Date,
+      reviewer: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      review: String,
+      rating: { type: Number },
     },
   ],
 });

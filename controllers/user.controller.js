@@ -5,7 +5,7 @@ export const getSuggestedConnections = async (req, res) => {
     try {
       // Get the current user's info for location and services offered
       const currentUser = await User.findById(req.user._id).select(
-        "location workerDetails.servicesOffered connections role"
+        "location connections headline"
       );
       
       if (!currentUser) {
@@ -39,7 +39,7 @@ export const getSuggestedConnections = async (req, res) => {
           ],
         })
           .select(
-            "username firstName lastName location workerDetails.servicesOffered profilePicture"
+            "username firstName lastName location headline profilePicture"
           )
           .limit(5);
   
@@ -57,6 +57,7 @@ export const getSuggestedConnections = async (req, res) => {
               username: 1,
               firstName: 1,
               lastName: 1,
+              headline: 1,
               location: 1,
               servicesOffered: '$workerDetails.servicesOffered',
               profilePicture: 1
@@ -78,6 +79,7 @@ export const getSuggestedConnections = async (req, res) => {
             username: 1,
             firstName: 1,
             lastName: 1,
+            headline: 1,
             location: 1,
             servicesOffered: '$workerDetails.servicesOffered',
             profilePicture: 1
@@ -299,21 +301,21 @@ export const disconnectUser = async (req, res) => {
 // followUser
 export const followClient = async (req, res) => {
   try {
-    const { clientName } = req.params;
-    const client = await User.findOne({ clientName });
+    const { clientId } = req.params;
+    const client = await User.findById(clientId);
     if (!client) {
       return res.status(404).json({ message: "Client not found" });
     }
 
     // Check if user is already following
-    if (req.user.following.includes(client._id)) {
+    if (req.user.followingClients.includes(client._id)) {
       return res.status(400).json({ message: "User already following" });
     }
 
     // Update current user's following
     const updatedUser = await User.findByIdAndUpdate(
       req.user._id,
-      { $push: { following: client._id } },
+      { $push: { followingClients: client._id } },
       { new: true }
     ).select("-password");
 
@@ -374,7 +376,7 @@ export const getUserConnections = async (req, res) => {
     const connections = await User.find({
       _id: { $in: req.user.connections },
     }).select(
-      "username firstName lastName location servicesOffered profilePicture"
+      "username firstName lastName location headline connections profilePicture"
     );
     res.status(200).json(connections);
   } catch (error) {
@@ -422,5 +424,35 @@ export const deleteAccount = async (req, res) => {
   } catch (error) {
     console.error("Error deleting account:", error.message);
     res.status(500).json({ message: "Error deleting account" });
+  }
+};
+
+// saveUser
+export const saveUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const userToSave = await User.findById(userId);
+    console.log("User to Save:", userToSave);
+    if (!userToSave) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if user is already saved
+    if (req.user.savedWorkers.includes(userToSave._id)) {
+      return res.status(400).json({ message: "User already saved" });
+    }
+
+    // Update current user's saved users
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
+      { $push: { savedWorkers: userToSave._id } },
+      { new: true }
+    ).select("-password");
+
+    res.status(200).json(updatedUser);
+    console.log("User saved successfully");
+  } catch (error) {
+    console.error("Error saving user:", error.message);
+    res.status(500).json({ message: "Error saving user" });
   }
 };

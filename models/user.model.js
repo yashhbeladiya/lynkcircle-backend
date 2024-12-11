@@ -34,6 +34,7 @@ const userSchema = new mongoose.Schema(
     connections: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     savedWorkers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     followingClients: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     communityJoined: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Community" },
     ],

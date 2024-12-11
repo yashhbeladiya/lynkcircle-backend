@@ -1,4 +1,4 @@
-import e from "express";
+
 import express from "express";
 import { getUserNotifications, markNotificationAsRead, deleteNotification } from "../controllers/notification.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";

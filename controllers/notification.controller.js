@@ -7,7 +7,13 @@ export const getUserNotifications = async (req, res) => {
       .populate("relatedUser", "firstName lastName username profilePicture")
       .populate("relatedPost", "content image");
 
-    res.status(200).json(notifications);
+      // filter out notifications that are not that is user's own
+    const filteredNotifications = notifications.filter( notification => {
+      return notification.relatedUser._id.toString() !== req.user._id.toString();
+    }
+    );
+
+    res.status(200).json(filteredNotifications);
   } catch (error) {
     console.error("Error in getUserNotifications: ", error);
     res.status(500).json({ message: error.message });

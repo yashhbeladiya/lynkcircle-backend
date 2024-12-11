@@ -217,7 +217,7 @@ export const getUserConnections = async (req, res) => {
       status: "accepted",
     }).populate(
       "sender",
-      "firstName lastName username profilePicture headline"
+      "firstName lastName username profilePicture headline connections"
     );
 
     res.status(200).json(connections);
