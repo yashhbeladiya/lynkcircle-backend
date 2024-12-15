@@ -12,6 +12,11 @@ import {
   updateJobPortfolio,
   deleteJobPortfolio,
   getJobPortfolioById,
+  createReview,
+  updateReview,
+  deleteReview,
+  getReview,
+  getReviewById,
 } from "../controllers/workDetail.controller.js";
 
 const router = express.Router();
@@ -30,5 +35,13 @@ router.post("/jobportfolio", protectRoute, createJobPortfolio);
 router.put("/jobportfolio", protectRoute, updateJobPortfolio);
 router.delete("/jobportfolio/:id", protectRoute, deleteJobPortfolio);
 router.get("/jobportfolio/id/:id", protectRoute, getJobPortfolioById);
+
+
+// review routes
+router.post("/review/:serviceId", protectRoute, createReview);
+router.put("/review/:serviceId", protectRoute, updateReview);
+router.delete("/review/:serviceId", protectRoute, deleteReview);
+router.get("/review/:serviceId", protectRoute, getReview);
+router.get("/review/:serviceId/:reviewerId", protectRoute, getReviewById);
 
 export default router;

@@ -11,8 +11,8 @@ const jobPortfolioSchema = new mongoose.Schema({
   },
   jobTitle: { type: String },
   description: { type: String },
-  images: { type: String },
-  videos: { type: String },
+  images: { type: [String] },
+  videos: { type: [String] },
   dateCompleted: { type: Date },
   clientUsername: { type: String },
   clientName: { type: String },
@@ -21,7 +21,7 @@ const jobPortfolioSchema = new mongoose.Schema({
       reviewer: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
       review: String,
       rating: { type: Number },
-    },
+    }, { timestamps: true },
   ],
 }, { timestamps: true });
 

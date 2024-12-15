@@ -24,10 +24,17 @@ export const getWorkDetails = async (req, res) => {
     try {
         // Find the work details of username from url
         const user = await User.findOne({ username: req.params.username });
-        const workDetails = await WorkDetail.find({ user: user._id }).populate("user", "firstName lastName headline profilePicture");
+
+        const workDetails = await WorkDetail.find({ user: user._id }).populate("user", "firstName lastName headline profilePicture").populate("reviews.reviewer", "firstName lastName profilePicture");
+        
         if (!workDetails) {
             return res.status(404).json({ message: "Work details not found" });
         }
+        
+        workDetails.forEach((workDetail) => {
+            workDetail.ratings = workDetail.reviews.map((review) => review.rating).reduce((a, b) => a + b, 0) / workDetail.reviews.length;
+        });
+
         res.status(200).json(workDetails);
     } catch (error) {
         console.log("Error in getWorkDetail: ", error.message);
@@ -75,7 +82,11 @@ export const deleteWorkDetailbyId = async (req, res) => {
 
 export const getWorkDetailsbyId = async (req, res) => {
     try {
-        const workDetail = await WorkDetail.findById(req.params.id).populate("user", "firstName lastName headline profilePicture");
+        const workDetail = await WorkDetail.findById(req.params.id).populate("user", "firstName lastName headline profilePicture").populate("reviews.reviewer", "firstName lastName profilePicture");
+
+        // get rating from reviews and calculate average
+        workDetail.ratings = workDetail.reviews.map((review) => review.rating).reduce((a, b) => a + b, 0) / workDetail.reviews.length;
+
         if (!workDetail) {
             return res.status(404).json({ message: "Work detail not found" });
         }
@@ -103,24 +114,36 @@ export const getJobPortfolioForService = async (req, res) => {
 export const createJobPortfolio = async (req, res) => {
     try {
         console.log("Create job portfolio");
-        const { service, jobTitle, description, images, video, dateCompleted, clientUsername, clientName, reviews } = req.body;
+        const {
+            service,
+            jobTitle,
+            description,
+            images, // Base64 strings or URLs
+            videos, // Base64 strings or URLs
+            dateCompleted,
+            clientUsername,
+            clientName,
+            reviews
+        } = req.body;
+
         const newJobPortfolio = new JobPortfolio({
             user: req.user._id,
             service,
             jobTitle,
             description,
             images,
-            video,
+            videos,
             dateCompleted,
             clientUsername,
             clientName,
             reviews,
         });
+
+        console.log("images type: ", typeof images);
+
         await newJobPortfolio.save();
-        console.log(newJobPortfolio);
         res.status(201).json({ message: "Job Portfolio created successfully" });
-    }
-    catch (error) {
+    } catch (error) {
         console.log("Error in createJobPortfolio: ", error.message);
         res.status(500).json({ message: "Server error" });
     }
@@ -145,14 +168,27 @@ export const updateJobPortfolio = async (req, res) => {
         if (!jobPortfolio) {
             return res.status(404).json({ message: "Job Portfolio not found" });
         }
-        jobPortfolio.jobTitle = req.body.jobTitle;
-        jobPortfolio.description = req.body.description;
-        jobPortfolio.images = req.body.images;
-        jobPortfolio.videos = req.body.videos;
-        jobPortfolio.dateCompleted = req.body.dateCompleted;
-        jobPortfolio.clientUsername = req.body.clientUsername;
-        jobPortfolio.clientName = req.body.clientName;
-        jobPortfolio.reviews = req.body.reviews;
+
+        const {
+            jobTitle,
+            description,
+            images, // Updated images
+            videos, // Updated videos
+            dateCompleted,
+            clientUsername,
+            clientName,
+            reviews,
+        } = req.body;
+
+        jobPortfolio.jobTitle = jobTitle;
+        jobPortfolio.description = description;
+        jobPortfolio.images = images;
+        jobPortfolio.videos = videos;
+        jobPortfolio.dateCompleted = dateCompleted;
+        jobPortfolio.clientUsername = clientUsername;
+        jobPortfolio.clientName = clientName;
+        jobPortfolio.reviews = reviews;
+
         await jobPortfolio.save();
         res.status(200).json({ message: "Job Portfolio updated successfully" });
     } catch (error) {
@@ -170,4 +206,115 @@ export const deleteJobPortfolio = async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 };
+
+export const createReview = async (req, res) => {
+    try {
+        const { serviceId } = req.params;
+        const { review, rating } = req.body;
+        const newReview = {
+            reviewer: req.user._id,
+            review,
+            rating,
+        };
+
+        const workDetail = await WorkDetail.findById(serviceId);
+
+        if (!workDetail) {
+            return res.status(404).json({ message: "Work detail not found" });
+        }
+
+        workDetail.reviews.push(newReview);
+
+        await workDetail.save();
+        res.status(201).json({ message: "Review created successfully" });
+    } catch (error) {
+        console.log("Error in createReview: ", error.message);
+        res.status(500).json({ message: "Server error" });
+    }
+}
+
+export const updateReview = async (req, res) => {
+    try {
+        const { serviceId } = req.params;
+        const { review, rating } = req.body;
+        const updatedReview = {
+            reviewer: req.user._id,
+            review,
+            rating,
+        };
+
+        const workDetail = await WorkDetail.findOne({ _id: serviceId, "reviews.reviewer": req.user._id });
+
+        if (!workDetail) {
+            return res.status(404).json({ message: "Review not found" });
+        };
+
+        const reviewIndex = workDetail.reviews.findIndex((review) => review.reviewer.toString() === req.user._id.toString());
+        workDetail.reviews[reviewIndex] = updatedReview;
+
+        await workDetail.save();
+        res.status(200).json({ message: "Review updated successfully" });
+    }
+    catch (error) {
+        console.log("Error in updateReview: ", error.message);
+        res.status(500).json({ message: "Server error" });
+    }
+
+}
+
+export const deleteReview = async (req, res) => {
+    try {
+        const { serviceId } = req.params;
+        const workDetail = await WorkDetail.findOne({ _id: serviceId, "reviews.reviewer": req.user._id });
+
+        if (!workDetail) {
+            return res.status(404).json({ message: "Review not found" });
+        }
+
+        workDetail.reviews = workDetail.reviews.filter((review) => review.reviewer.toString() !== req.user._id.toString());
+
+        await workDetail.save();
+        res.status(200).json({ message: "Review deleted successfully" });
+    } catch (error) {
+        console.log("Error in deleteReview: ", error.message);
+        res.status(500).json({ message: "Server error" });
+    }
+}
+
+export const getReview = async (req, res) => {
+    try {
+        const { serviceId } = req.params;
+        const workDetail = await WorkDetail.findById(serviceId);
+        if (!workDetail) {
+            return res.status(404).json({ message: "Work detail not found" });
+        }
+        res.status(200).json(workDetail.reviews);
+    }
+    catch (error) {
+        console.log("Error in getReview: ", error.message);
+        res.status(500).json({ message: "Server error" });
+    }
+}
+
+export const getReviewById = async (req, res) => {
+    try {
+        const { serviceId, reviewerId } = req.params;
+        const workDetail = await WorkDetail.findById(serviceId);
+        if (!workDetail) {
+            return res.status(404).json({ message: "Work detail not found" });
+        }
+        const review = workDetail.reviews.find((review) => review.reviewer.toString() === reviewerId);
+        if (!review) {
+            return res.status(404).json({ message: "Review not found" });
+        }
+        res.status(200).json(review);
+    } catch (error) {
+        console.log("Error in getReviewById: ", error.message);
+        res.status(500).json({ message: "Server error" });
+    }
+}
+
+
+        
+
 

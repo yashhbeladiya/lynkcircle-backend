@@ -20,6 +20,7 @@ const workDetailSchema = new mongoose.Schema({
       reviewer: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
       review: String,
       rating: { type: Number },
+      createdAt: { type: Date, default: Date.now },
     },
   ],
 });
