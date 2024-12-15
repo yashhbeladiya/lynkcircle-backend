@@ -287,8 +287,6 @@ export const getConnectionStatus = async (req, res) => {
       status: "pending",
     });
 
-    console.log("pending request is ", pendingRequest);
-
     if (pendingRequest) {
       if (pendingRequest.sender.toString() === currentUserId.toString()) {
         console.log("send status as pending");

@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { sendWelcomeEmail } from '../emails/emailHandlers.js';
 
+
 export const signup = async (req, res) => {
     try {
         const { firstName, lastName, username, role, email, password } = req.body;
@@ -88,6 +89,8 @@ export const login = async (req, res) => {
             sameSite: 'Strict',
             secure: process.env.NODE_ENV === 'production' ? true : false
         });
+
+        console.log('got a token');
 
         res.json({ message: 'Logged in successfully' }); 
 
